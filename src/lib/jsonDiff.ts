@@ -78,40 +78,87 @@ const isPrimitive = (value: unknown): boolean =>
   value === null || (typeof value !== 'object' && typeof value !== 'function')
 
 /**
- * Longest common subsequence over deep equality. Returns the index pairs that
- * are kept in order, used to distinguish insertions/removals from reordering.
+ * Order-independent string form of a value, used to pair equal elements in
+ * near-linear time. Object keys are sorted so it agrees with `deepEqual`.
  */
-function lcsMatches(a: unknown[], b: unknown[]): Array<[number, number]> {
-  const n = a.length
-  const m = b.length
-  const dp: number[][] = Array.from({ length: n + 1 }, () =>
-    new Array<number>(m + 1).fill(0),
-  )
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`
+  if (value !== null && typeof value === 'object') {
+    const entries = Object.keys(value as Record<string, unknown>)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonical((value as Record<string, unknown>)[key])}`)
+    return `{${entries.join(',')}}`
+  }
+  return JSON.stringify(value) ?? 'null'
+}
 
-  for (let i = n - 1; i >= 0; i--) {
-    for (let j = m - 1; j >= 0; j--) {
-      dp[i][j] = deepEqual(a[i], b[j])
-        ? dp[i + 1][j + 1] + 1
-        : Math.max(dp[i + 1][j], dp[i][j + 1])
+/**
+ * Indices of one longest strictly increasing subsequence of `sequence`
+ * (patience sorting, O(n log n)).
+ */
+function lisIndices(sequence: number[]): number[] {
+  const tails: number[] = []
+  const tailIndex: number[] = []
+  const previous = new Array<number>(sequence.length).fill(-1)
+
+  for (let i = 0; i < sequence.length; i++) {
+    const value = sequence[i]
+    let lo = 0
+    let hi = tails.length
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1
+      if (tails[mid] < value) lo = mid + 1
+      else hi = mid
     }
+    if (lo > 0) previous[i] = tailIndex[lo - 1]
+    tails[lo] = value
+    tailIndex[lo] = i
   }
 
-  const matches: Array<[number, number]> = []
-  let i = 0
-  let j = 0
-  while (i < n && j < m) {
-    if (deepEqual(a[i], b[j])) {
-      matches.push([i, j])
-      i++
-      j++
-    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
-      i++
-    } else {
-      j++
+  const result: number[] = []
+  let cursor = tailIndex[tails.length - 1] ?? -1
+  while (cursor !== -1) {
+    result.push(cursor)
+    cursor = previous[cursor]
+  }
+  return result.reverse()
+}
+
+/**
+ * Positions (into `matched`) of elements that can stay put. Elements already at
+ * the same index are always kept; the remaining ones are grouped between those
+ * anchors and reduced by longest increasing subsequence. Anything not kept is a
+ * move, which keeps moves minimal and avoids no-op moves.
+ */
+function keptPositions(
+  matched: Array<{ oldIndex: number; newIndex: number }>,
+): Set<number> {
+  const kept = new Set<number>()
+  let segmentStart = 0
+  let lowerNew = -1
+
+  const flush = (endExclusive: number, upperNew: number) => {
+    const positions: number[] = []
+    for (let position = segmentStart; position < endExclusive; position++) {
+      const newIndex = matched[position].newIndex
+      if (newIndex > lowerNew && newIndex < upperNew) positions.push(position)
     }
+    const lis = lisIndices(positions.map((position) => matched[position].newIndex))
+    for (const index of lis) kept.add(positions[index])
   }
 
-  return matches
+  for (let position = 0; position < matched.length; position++) {
+    const { oldIndex, newIndex } = matched[position]
+    if (oldIndex === newIndex) {
+      flush(position, newIndex)
+      kept.add(position)
+      lowerNew = newIndex
+      segmentStart = position + 1
+    }
+  }
+  flush(matched.length, Infinity)
+
+  return kept
 }
 
 function diffObject(
@@ -203,9 +250,10 @@ function diffArrayByKey(
 }
 
 /**
- * Fallback for arrays without a usable identity key: keep the longest common
- * subsequence stable, then pair up the rest so pure reorders surface as moves
- * rather than a wall of add/remove noise.
+ * Fallback for arrays without a usable identity key. Equal elements are paired
+ * across the two arrays, then the longest in-order run of pairs is treated as
+ * unmoved. Everything else that exists on both sides is a move, and the
+ * leftovers are additions/removals.
  */
 function diffArrayByLcs(
   oldArr: unknown[],
@@ -213,40 +261,49 @@ function diffArrayByLcs(
   basePath: string,
 ): DiffEntry[] {
   const entries: DiffEntry[] = []
+
+  const queues = new Map<string, number[]>()
+  for (let j = 0; j < newArr.length; j++) {
+    const key = canonical(newArr[j])
+    const queue = queues.get(key)
+    if (queue) queue.push(j)
+    else queues.set(key, [j])
+  }
+
+  const cursors = new Map<string, number>()
+  const matched: Array<{ oldIndex: number; newIndex: number; value: unknown }> = []
+
+  for (let i = 0; i < oldArr.length; i++) {
+    const key = canonical(oldArr[i])
+    const queue = queues.get(key)
+    if (!queue) continue
+    const cursor = cursors.get(key) ?? 0
+    if (cursor >= queue.length) continue
+    cursors.set(key, cursor + 1)
+    matched.push({ oldIndex: i, newIndex: queue[cursor], value: oldArr[i] })
+  }
+
+  const kept = keptPositions(matched)
   const matchedOld = new Set<number>()
   const matchedNew = new Set<number>()
 
-  for (const [i, j] of lcsMatches(oldArr, newArr)) {
-    matchedOld.add(i)
-    matchedNew.add(j)
-  }
+  for (let position = 0; position < matched.length; position++) {
+    const item = matched[position]
+    matchedOld.add(item.oldIndex)
+    matchedNew.add(item.newIndex)
 
-  const oldRemaining = oldArr
-    .map((_, index) => index)
-    .filter((index) => !matchedOld.has(index))
-  const newRemaining = newArr
-    .map((_, index) => index)
-    .filter((index) => !matchedNew.has(index))
-
-  const movedNew = new Set<number>()
-  for (const oldIndex of oldRemaining) {
-    const newIndex = newRemaining.find(
-      (index) => !movedNew.has(index) && deepEqual(oldArr[oldIndex], newArr[index]),
-    )
-    if (newIndex === undefined) continue
-    movedNew.add(newIndex)
-    matchedOld.add(oldIndex)
+    if (kept.has(position) || item.oldIndex === item.newIndex) continue
     entries.push({
-      path: keyFor(basePath, oldIndex),
+      path: keyFor(basePath, item.oldIndex),
       type: 'moved',
-      oldValue: oldArr[oldIndex],
-      newValue: newArr[newIndex],
-      fromIndex: oldIndex,
-      toIndex: newIndex,
+      oldValue: item.value,
+      newValue: item.value,
+      fromIndex: item.oldIndex,
+      toIndex: item.newIndex,
     })
   }
 
-  for (const index of oldRemaining) {
+  for (let index = 0; index < oldArr.length; index++) {
     if (matchedOld.has(index)) continue
     entries.push({
       path: keyFor(basePath, index),
@@ -255,8 +312,8 @@ function diffArrayByLcs(
     })
   }
 
-  for (const index of newRemaining) {
-    if (movedNew.has(index)) continue
+  for (let index = 0; index < newArr.length; index++) {
+    if (matchedNew.has(index)) continue
     entries.push({
       path: keyFor(basePath, index),
       type: 'added',

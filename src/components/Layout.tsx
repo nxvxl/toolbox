@@ -1,5 +1,6 @@
 import { Link, Outlet } from 'react-router-dom'
 import { TOOLS } from '../tools/registry'
+import InstallButton from './InstallButton'
 
 export default function Layout() {
   return (
@@ -11,6 +12,7 @@ export default function Layout() {
           <span className="text-xs text-slate-500">~/utilities</span>
         </Link>
         <nav className="ml-auto flex items-center gap-3 text-sm">
+          <InstallButton />
           <Link
             to="/"
             className="px-2 py-1 text-slate-400 transition"

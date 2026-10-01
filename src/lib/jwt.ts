@@ -102,15 +102,68 @@ export const decodeJwt = (token: string): DecodedJwt => {
   }
 }
 
+const decodeBase64 = (base64: string): ArrayBuffer => {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return bytes.buffer
+}
+
 const pemToBuffer = (pem: string): ArrayBuffer => {
   const base64 = pem
     .replace(/-----BEGIN [^-]+-----/, '')
     .replace(/-----END [^-]+-----/, '')
     .replace(/\s+/g, '')
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return bytes.buffer
+  return decodeBase64(base64)
+}
+
+/** Best-effort decode of a PEM or bare (base64/base64url) key into DER bytes. */
+const keyToBuffer = (key: string): ArrayBuffer | null => {
+  try {
+    if (/-----BEGIN [^-]+-----/.test(key)) return pemToBuffer(key)
+    const normalized = key
+      .replace(/\s+/g, '')
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+    if (normalized === '') return null
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+    return decodeBase64(padded)
+  } catch {
+    return null
+  }
+}
+
+const ASYMMETRIC_ALGORITHMS: Array<
+  RsaHashedImportParams | EcKeyImportParams | Algorithm
+> = [
+  { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+  { name: 'RSA-PSS', hash: 'SHA-256' },
+  { name: 'ECDSA', namedCurve: 'P-256' },
+  { name: 'ECDSA', namedCurve: 'P-384' },
+  { name: 'ECDSA', namedCurve: 'P-521' },
+  { name: 'Ed25519' },
+]
+
+/**
+ * True when the supplied string is really an asymmetric key (PEM or bare DER),
+ * regardless of encoding. Used to stop HMAC/`alg` confusion, where a token
+ * header downgrades a public key into an HMAC secret.
+ */
+const isAsymmetricKey = async (key: string): Promise<boolean> => {
+  const cleaned = key.replace(/\s+/g, '')
+  if (cleaned.length < 32) return false
+  const der = keyToBuffer(key)
+  if (!der) return false
+
+  for (const algorithm of ASYMMETRIC_ALGORITHMS) {
+    try {
+      await crypto.subtle.importKey('spki', der, algorithm, false, ['verify'])
+      return true
+    } catch {
+      // try the next candidate
+    }
+  }
+  return false
 }
 
 const importKey = async (
@@ -121,6 +174,11 @@ const importKey = async (
   const usages: KeyUsage[] = [usage]
 
   if (isHmac(alg)) {
+    if (await isAsymmetricKey(key)) {
+      throw new Error(
+        'HMAC verification needs a shared secret, not an asymmetric key.',
+      )
+    }
     return crypto.subtle.importKey(
       'raw',
       new TextEncoder().encode(key),
@@ -187,6 +245,11 @@ export async function verifyJwt(
   algOverride?: JwtAlgorithm,
 ): Promise<boolean> {
   const { signature, signingInput, header } = decodeJwt(token)
+  if (algOverride && header.alg !== algOverride) {
+    throw new Error(
+      `Token algorithm "${String(header.alg)}" does not match the selected algorithm "${algOverride}".`,
+    )
+  }
   const alg = algOverride ?? header.alg
   if (!isJwtAlgorithm(alg)) {
     throw new Error('Unsupported algorithm.')

@@ -11,9 +11,10 @@ export const indentValue = (option: IndentOption): string | number =>
 export const sortValue = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(sortValue)
   if (value !== null && typeof value === 'object') {
-    const sorted: Record<string, unknown> = {}
-    for (const key of Object.keys(value as Record<string, unknown>).sort()) {
-      sorted[key] = sortValue((value as Record<string, unknown>)[key])
+    const source = value as Record<string, unknown>
+    const sorted: Record<string, unknown> = Object.create(null)
+    for (const key of Object.keys(source).sort()) {
+      sorted[key] = sortValue(source[key])
     }
     return sorted
   }
