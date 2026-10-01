@@ -1,0 +1,14 @@
+{
+  // Cloudflare Workers deployment for the Toolbox static SPA.
+  // https://developers.cloudflare.com/workers/static-assets/
+  "name": "toolbox",
+  "compatibility_date": "2025-07-01",
+  "assets": {
+    "directory": "./dist",
+    // Serve index.html for unmatched paths so client-side routes such as
+    // /tools/jwt resolve on a cold load or refresh. Do NOT use a
+    // "/* /index.html 200" rule in _redirects on Workers: the static-assets
+    // router rejects it as an infinite loop (code 100324).
+    "not_found_handling": "single-page-application"
+  }
+}

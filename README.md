@@ -57,37 +57,50 @@ menu). After the first load it keeps working without a network connection.
 
 Toolbox is a static, client-side SPA, so it deploys to any static host with
 HTTPS (required for the service worker / PWA install). The recommended host is
-[Cloudflare Pages](https://pages.cloudflare.com).
+Cloudflare.
 
-### Cloudflare Pages (Git-connected)
+### Cloudflare Workers (Git-connected)
 
-1. In the Cloudflare dashboard, go to **Workers & Pages → Create → Pages →
-   Connect to Git** and select the `toolbox` repository.
-2. Set the build settings:
-   - **Framework preset:** Vite
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
+Cloudflare deploys this as a Worker with static assets. `wrangler.jsonc`
+already declares the output directory and the SPA fallback:
+
+- **Build command:** `npm run build`
+- **Deploy command:** `npx wrangler deploy`
+
+1. In the Cloudflare dashboard, go to **Workers & Pages → Create → Connect to
+   Git** and select the `toolbox` repository.
+2. Set the build command to `npm run build` (and the deploy command to
+   `npx wrangler deploy` if prompted).
 3. Save and deploy. Every push to `master` publishes to production; pull
    requests get their own preview URL.
 
-No extra configuration is needed beyond the build settings: the client-side
-routing fallback ships in `public/_redirects`, which Vite copies into `dist`.
+The SPA fallback lives in `wrangler.jsonc` as
+`assets.not_found_handling: "single-page-application"`, which serves
+`index.html` for unmatched paths so client-side routes like `/tools/jwt`
+resolve on a cold load or refresh.
+
+> Do not add a `/* /index.html 200` rule to a `_redirects` file for Workers.
+> The static-assets router rejects it as an infinite loop (`code: 100324`) —
+> use `not_found_handling` instead.
 
 ### Custom domain
 
-In the Pages project, open **Custom domains → Set up a domain**, enter your
-domain, and follow the DNS instructions. HTTPS certificates are issued
-automatically. No `base` change is required in `vite.config.ts` as long as the
-site is served from the domain root.
+Open the Worker/project, go to **Settings → Domains & Routes → Add → Custom
+domain**, enter your domain, and follow the DNS instructions. HTTPS
+certificates are issued automatically. No `base` change is required in
+`vite.config.ts` as long as the site is served from the domain root.
 
 ### Other hosts
 
-- **Netlify:** same settings (`npm run build`, publish `dist`). `public/_redirects`
-  is picked up automatically.
+- **Cloudflare Pages (classic):** use the same build settings; Pages expects a
+  `public/_redirects` file containing `/* /index.html 200` instead of the
+  `wrangler.jsonc` option.
+- **Netlify:** `npm run build`, publish `dist`, and add a `public/_redirects`
+  file with `/* /index.html 200`.
 - **Vercel:** same build settings; add a rewrite of `/(.*)` to `/index.html` in
-  `vercel.json` (Vercel ignores `_redirects`).
+  `vercel.json`.
 - **GitHub Pages:** works, but requires a `404.html` fallback and a Vite `base`
-  matching the repo subpath. Cloudflare Pages / Netlify / Vercel are simpler.
+  matching the repo subpath. Cloudflare / Netlify / Vercel are simpler.
 
 ## Project structure
 
