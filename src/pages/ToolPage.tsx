@@ -15,17 +15,17 @@ export default function ToolPage() {
     <div className="flex h-full">
       <ToolSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="menu-bar flex shrink-0 items-center gap-2 px-5 py-2">
+        <div className="flex min-h-12 shrink-0 items-center gap-2 border-b border-slate-800 px-5 py-2">
           <Link
             to="/"
-            className="text-sm text-slate-400 transition hover:text-emerald-400"
+            className="text-sm text-slate-400 transition hover:text-slate-100"
           >
             ← All tools
           </Link>
-          <span className="text-slate-600">/</span>
+          <span className="text-slate-500">/</span>
           <span className="text-sm text-slate-300">{tool.name}</span>
         </div>
-        <div className="min-h-0 flex-1 p-5">
+        <div className="min-h-0 flex-1 p-4">
           <Tool />
         </div>
       </div>

@@ -307,6 +307,19 @@ button.plain:active {
   color: #2a7fd4;
 }
 
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Inset light form fields */
 input:not([type="checkbox"]):not([type="radio"]),
 textarea,
@@ -390,19 +403,4 @@ input[type="radio"] {
 
 ::-webkit-scrollbar-corner {
   background: #eceef1;
-}
-
-@keyframes blink {
-  0%,
-  49% {
-    opacity: 1;
-  }
-  50%,
-  100% {
-    opacity: 0;
-  }
-}
-
-.cursor-blink {
-  animation: blink 1s step-end infinite;
 }

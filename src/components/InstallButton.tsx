@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import Button from './Button'
+import Panel from './Panel'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -62,11 +64,11 @@ export default function InstallButton() {
 
   return (
     <div className="relative">
-      <button type="button" onClick={install} className="px-2 py-1 text-xs">
+      <Button size="sm" onClick={install}>
         Install app
-      </button>
+      </Button>
       {showHelp && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-60 rounded-md border border-slate-800 bg-slate-900/95 p-3 text-xs text-slate-200 shadow-lg">
+        <Panel className="absolute right-0 top-full z-50 mt-2 w-64 p-3 text-xs text-slate-400">
           {ios ? (
             <>
               To install on iOS, tap the Share button, then choose{' '}
@@ -79,7 +81,7 @@ export default function InstallButton() {
               the install icon in the address bar).
             </>
           )}
-        </div>
+        </Panel>
       )}
     </div>
   )

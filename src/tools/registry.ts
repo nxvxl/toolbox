@@ -41,7 +41,18 @@ export const TOOLS: Tool[] = [
     keywords: ['jwt', 'token', 'encode', 'decode', 'auth', 'jose'],
     component: JwtTool,
   },
-]
+].sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
 
 export const getTool = (id: string | undefined): Tool | undefined =>
   TOOLS.find((tool) => tool.id === id)
+
+export const filterTools = (query: string): Tool[] => {
+  const term = query.trim().toLowerCase()
+  if (!term) return TOOLS
+  return TOOLS.filter((tool) =>
+    [tool.name, tool.description, ...tool.keywords]
+      .join(' ')
+      .toLowerCase()
+      .includes(term),
+  )
+}

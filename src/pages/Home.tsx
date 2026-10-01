@@ -1,32 +1,23 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { TOOLS } from '../tools/registry'
+import Button from '../components/Button'
+import TitleBar from '../components/TitleBar'
+import { filterTools } from '../tools/registry'
 
 export default function Home() {
   const [query, setQuery] = useState('')
 
-  const results = useMemo(() => {
-    const term = query.trim().toLowerCase()
-    if (!term) return TOOLS
-    return TOOLS.filter((tool) =>
-      [tool.name, tool.description, ...tool.keywords]
-        .join(' ')
-        .toLowerCase()
-        .includes(term),
-    )
-  }, [query])
+  const results = useMemo(() => filterTools(query), [query])
 
   return (
     <div className="h-full overflow-auto">
       <div className="mx-auto flex max-w-4xl flex-col gap-8 px-6 py-12">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight text-slate-100">
-            toolbox
-            <span className="cursor-blink ml-1 text-emerald-400">_</span>
+            Toolbox
           </h1>
           <p className="text-slate-400">
-            <span className="text-emerald-400">$</span> a collection of small
-            utilities for everyday development tasks.
+            A collection of small utilities for everyday development tasks.
           </p>
         </div>
 
@@ -35,21 +26,19 @@ export default function Home() {
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="grep tools..."
+            placeholder="Search tools..."
             autoFocus
-            className="w-full rounded-lg border border-slate-800 bg-slate-900/60 py-3 pl-4 pr-10 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-indigo-500"
+            className="w-full py-3 pl-4 pr-12 text-sm text-slate-100 outline-none"
           />
-          <button
-            type="button"
+          <Button
+            size="sm"
+            className="absolute right-2 top-1/2 -translate-y-1/2"
             onClick={() => setQuery('')}
             aria-label="Clear search"
-            aria-disabled={query === ''}
-            className={`plain absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-base leading-none text-slate-500 ${
-              query === '' ? 'opacity-40' : ''
-            }`}
+            disabled={query === ''}
           >
             ×
-          </button>
+          </Button>
         </div>
 
         {results.length === 0 ? (
@@ -64,9 +53,7 @@ export default function Home() {
                   to={`/tools/${tool.id}`}
                   className="window flex h-full flex-col transition hover:-translate-y-0.5"
                 >
-                  <div className="title-bar">
-                    <span className="text-xs font-semibold">{tool.name}</span>
-                  </div>
+                  <TitleBar title={tool.name} />
                   <div className="flex flex-1 flex-col gap-2 p-4">
                     <span className="text-sm text-slate-400">
                       {tool.description}
@@ -75,7 +62,7 @@ export default function Home() {
                       {tool.keywords.slice(0, 3).map((keyword) => (
                         <span
                           key={keyword}
-                          className="border border-slate-800 px-1.5 py-0.5 text-xs text-slate-500"
+                          className="rounded-md border border-slate-800 px-1.5 py-0.5 text-xs text-slate-500"
                         >
                           {keyword}
                         </span>

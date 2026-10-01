@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
+import Badge from '../components/Badge'
 import Button from '../components/Button'
+import Panel from '../components/Panel'
 import TextEditor from '../components/TextEditor'
+import TitleBar from '../components/TitleBar'
 import ToolHeader from '../components/ToolHeader'
 import { diffText, type LineChangeType } from '../lib/textDiff'
 
@@ -26,8 +29,8 @@ A growing collection of small developer utilities.
 `
 
 const ROW_STYLES: Record<LineChangeType, string> = {
-  added: 'bg-emerald-500/10 text-emerald-300',
-  removed: 'bg-rose-500/10 text-rose-300',
+  added: 'bg-emerald-500/10 text-emerald-700',
+  removed: 'bg-rose-500/10 text-rose-700',
   equal: 'text-slate-400',
 }
 
@@ -96,32 +99,25 @@ export default function TextDiff() {
           label="Original"
           value={left}
           onChange={setLeft}
-          accent="text-rose-400"
           placeholder="Paste original text here..."
         />
         <TextEditor
           label="Modified"
           value={right}
           onChange={setRight}
-          accent="text-emerald-400"
           placeholder="Paste modified text here..."
         />
       </div>
 
-      <section className="window flex max-h-[45%] flex-col">
-        <div className="title-bar">
-          <span className="text-xs font-semibold">Result</span>
+      <Panel className="flex max-h-[45%] flex-col">
+        <TitleBar title="Result">
           {result && (
-            <div className="flex gap-2 text-xs">
-              <span className="border border-emerald-500/50 bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-400">
-                + {result.added} added
-              </span>
-              <span className="border border-rose-500/50 bg-rose-500/10 px-2 py-0.5 font-medium text-rose-400">
-                - {result.removed} removed
-              </span>
-            </div>
+            <>
+              <Badge tone="added">+ {result.added} added</Badge>
+              <Badge tone="removed">- {result.removed} removed</Badge>
+            </>
           )}
-          <label className="ml-auto flex cursor-pointer items-center gap-2 text-xs text-slate-400">
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500">
             <input
               type="checkbox"
               checked={showUnchanged}
@@ -129,7 +125,7 @@ export default function TextDiff() {
             />
             Show unchanged
           </label>
-        </div>
+        </TitleBar>
 
         <div className="min-h-24 flex-1 overflow-auto">
           {!compared && (
@@ -139,7 +135,7 @@ export default function TextDiff() {
             </p>
           )}
           {compared && result && result.added + result.removed === 0 && (
-            <p className="p-3 text-sm text-emerald-400">
+            <p className="p-3 text-sm text-emerald-700">
               No differences found. The texts are identical.
             </p>
           )}
@@ -150,10 +146,10 @@ export default function TextDiff() {
                   key={index}
                   className={`grid grid-cols-[3.5rem_3.5rem_1.25rem_1fr] ${ROW_STYLES[line.type]}`}
                 >
-                  <span className="select-none border-r border-slate-800/60 px-2 text-right text-slate-600">
+                  <span className="select-none border-r border-slate-800/60 px-2 text-right text-slate-500">
                     {line.oldLine ?? ''}
                   </span>
-                  <span className="select-none border-r border-slate-800/60 px-2 text-right text-slate-600">
+                  <span className="select-none border-r border-slate-800/60 px-2 text-right text-slate-500">
                     {line.newLine ?? ''}
                   </span>
                   <span className="select-none text-center font-bold">
@@ -167,7 +163,7 @@ export default function TextDiff() {
             </div>
           )}
         </div>
-      </section>
+      </Panel>
     </div>
   )
 }

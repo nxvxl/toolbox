@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react'
+import Badge from '../components/Badge'
 import Button from '../components/Button'
+import ErrorNote from '../components/ErrorNote'
+import Panel from '../components/Panel'
 import TextEditor from '../components/TextEditor'
+import TitleBar from '../components/TitleBar'
 import ToolHeader from '../components/ToolHeader'
+import { toneClass } from '../components/tones'
 import { diffJson, type ChangeType, type DiffEntry } from '../lib/jsonDiff'
 
 const SAMPLE_OLD = `{
@@ -28,13 +33,6 @@ const SAMPLE_NEW = `{
   ],
   "license": "MIT"
 }`
-
-const TYPE_STYLES: Record<ChangeType, string> = {
-  added: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-  removed: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-  changed: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-  moved: 'bg-sky-500/10 text-sky-400 border-sky-500/30',
-}
 
 const TYPE_SIGNS: Record<ChangeType, string> = {
   added: '+',
@@ -129,14 +127,12 @@ export default function JsonDiff() {
           label="Original"
           value={left}
           onChange={setLeft}
-          accent="text-rose-400"
           placeholder="Paste JSON here..."
         />
         <TextEditor
           label="Modified"
           value={right}
           onChange={setRight}
-          accent="text-emerald-400"
           placeholder="Paste JSON here..."
         />
       </div>
@@ -160,18 +156,18 @@ interface ResultPanelProps {
 
 function ResultPanel({ compared, error, entries, counts }: ResultPanelProps) {
   return (
-    <section className="window flex max-h-[45%] flex-col">
-      <div className="title-bar">
-        <span className="text-xs font-semibold">Result</span>
+    <Panel className="flex max-h-[45%] flex-col">
+      <TitleBar title="Result">
         {compared && !error && (
-          <div className="flex gap-2 text-xs">
-            <Badge type="added" count={counts.added} />
-            <Badge type="removed" count={counts.removed} />
-            <Badge type="changed" count={counts.changed} />
-            <Badge type="moved" count={counts.moved} />
+          <div className="flex gap-2">
+            {(Object.keys(counts) as ChangeType[]).map((type) => (
+              <Badge key={type} tone={type}>
+                {TYPE_SIGNS[type]} {counts[type]} {type}
+              </Badge>
+            ))}
           </div>
         )}
-      </div>
+      </TitleBar>
 
       <div className="min-h-24 flex-1 overflow-auto p-3">
         {!compared && (
@@ -179,11 +175,9 @@ function ResultPanel({ compared, error, entries, counts }: ResultPanelProps) {
             Press <span className="text-slate-300">Compare</span> to see the diff.
           </p>
         )}
-        {compared && error && (
-          <p className="font-mono text-sm text-rose-400">{error}</p>
-        )}
+        {compared && error && <ErrorNote>{error}</ErrorNote>}
         {compared && !error && entries.length === 0 && (
-          <p className="text-sm text-emerald-400">
+          <p className="text-sm text-emerald-700">
             No differences found. The documents are identical.
           </p>
         )}
@@ -195,30 +189,20 @@ function ResultPanel({ compared, error, entries, counts }: ResultPanelProps) {
           </ul>
         )}
       </div>
-    </section>
-  )
-}
-
-function Badge({ type, count }: { type: ChangeType; count: number }) {
-  return (
-    <span
-      className={`rounded border px-2 py-0.5 font-medium ${TYPE_STYLES[type]}`}
-    >
-      {TYPE_SIGNS[type]} {count} {type}
-    </span>
+    </Panel>
   )
 }
 
 function ChangeRow({ entry }: { entry: DiffEntry }) {
   return (
     <li
-      className={`rounded-md border px-3 py-2 font-mono text-xs ${TYPE_STYLES[entry.type]}`}
+      className={`rounded-md border px-3 py-2 font-mono text-xs ${toneClass(entry.type)}`}
     >
       <div className="flex items-center gap-2">
         <span className="font-bold">{TYPE_SIGNS[entry.type]}</span>
         <span className="break-all text-slate-200">{entry.path}</span>
         {entry.type === 'moved' && (
-          <span className="text-sky-300">
+          <span className="text-sky-700">
             [{entry.fromIndex}] → [{entry.toIndex}]
           </span>
         )}
@@ -228,14 +212,14 @@ function ChangeRow({ entry }: { entry: DiffEntry }) {
           {formatValue(entry.oldValue)}
         </pre>
       ) : (
-        <div className="mt-1 grid gap-1 pl-4 text-slate-300">
+        <div className="mt-1 grid gap-1 pl-4">
           {entry.type !== 'added' && (
-            <pre className="whitespace-pre-wrap break-all text-rose-300">
+            <pre className="whitespace-pre-wrap break-all text-rose-700">
               - {formatValue(entry.oldValue)}
             </pre>
           )}
           {entry.type !== 'removed' && (
-            <pre className="whitespace-pre-wrap break-all text-emerald-300">
+            <pre className="whitespace-pre-wrap break-all text-emerald-700">
               + {formatValue(entry.newValue)}
             </pre>
           )}

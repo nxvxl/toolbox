@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react'
+import Badge from '../components/Badge'
 import Button from '../components/Button'
+import ErrorNote from '../components/ErrorNote'
+import Panel from '../components/Panel'
 import TextEditor from '../components/TextEditor'
+import TitleBar from '../components/TitleBar'
 import ToolHeader from '../components/ToolHeader'
 import {
   JWT_ALGORITHMS,
@@ -44,15 +48,13 @@ export default function JwtTool() {
         description="Decode, inspect, sign and verify JSON Web Tokens."
       >
         {(['decode', 'encode'] as Mode[]).map((value) => (
-          <button
+          <Button
             key={value}
-            type="button"
+            variant={mode === value ? 'primary' : 'ghost'}
             onClick={() => setMode(value)}
-            data-variant={mode === value ? 'primary' : undefined}
-            className="px-3 py-2 text-sm capitalize"
           >
-            {value}
-          </button>
+            {value === 'decode' ? 'Decode' : 'Encode'}
+          </Button>
         ))}
       </ToolHeader>
 
@@ -113,14 +115,10 @@ function DecodeView({ onLoadEncode }: { onLoadEncode: () => void }) {
           label="Encoded token"
           value={token}
           onChange={(value) => update(() => setToken(value))}
-          accent="text-indigo-400"
           placeholder="Paste a JWT..."
         />
-        <section className="window shrink-0">
-          <div className="title-bar">
-            <span className="text-xs font-semibold">
-              Verify signature
-            </span>
+        <Panel className="shrink-0">
+          <TitleBar title="Verify signature">
             <select
               value={alg}
               onChange={(event) =>
@@ -137,7 +135,7 @@ function DecodeView({ onLoadEncode }: { onLoadEncode: () => void }) {
                 </option>
               ))}
             </select>
-          </div>
+          </TitleBar>
           <div className="p-3">
             <textarea
               value={secret}
@@ -153,7 +151,7 @@ function DecodeView({ onLoadEncode }: { onLoadEncode: () => void }) {
               {status && (
                 <span
                   className={`text-xs font-medium ${
-                    status.ok ? 'text-emerald-400' : 'text-rose-400'
+                    status.ok ? 'text-emerald-700' : 'text-rose-700'
                   }`}
                 >
                   {status.message}
@@ -161,15 +159,11 @@ function DecodeView({ onLoadEncode }: { onLoadEncode: () => void }) {
               )}
             </div>
           </div>
-        </section>
+        </Panel>
       </div>
 
       <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
-        {decoded.error && (
-          <p className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 font-mono text-xs text-rose-300">
-            {decoded.error}
-          </p>
-        )}
+        {decoded.error && <ErrorNote>{decoded.error}</ErrorNote>}
         {decoded.value && (
           <>
             <JsonBlock label="Header">
@@ -190,7 +184,7 @@ function DecodeView({ onLoadEncode }: { onLoadEncode: () => void }) {
             <button
               type="button"
               onClick={() => update(() => setToken(SAMPLE_TOKEN))}
-              className="text-indigo-400 underline-offset-2 hover:underline"
+              className="plain text-indigo-600 underline underline-offset-2"
             >
               load the sample
             </button>{' '}
@@ -198,7 +192,7 @@ function DecodeView({ onLoadEncode }: { onLoadEncode: () => void }) {
             <button
               type="button"
               onClick={onLoadEncode}
-              className="text-indigo-400 underline-offset-2 hover:underline"
+              className="plain text-indigo-600 underline underline-offset-2"
             >
               create your own
             </button>
@@ -221,21 +215,14 @@ function Claims({ payload }: { payload: Record<string, unknown> }) {
   const exp = typeof payload.exp === 'number' ? payload.exp : null
 
   return (
-    <section className="window">
-      <div className="title-bar">
-        <span className="text-xs font-semibold">Claims</span>
+    <Panel>
+      <TitleBar title="Claims">
         {exp !== null && (
-          <span
-            className={`border px-2 py-0.5 text-xs font-medium ${
-              exp < now
-                ? 'border-rose-500/50 text-rose-400'
-                : 'border-emerald-500/50 text-emerald-400'
-            }`}
-          >
+          <Badge tone={exp < now ? 'danger' : 'success'}>
             {exp < now ? 'expired' : 'valid'}
-          </span>
+          </Badge>
         )}
-      </div>
+      </TitleBar>
       <dl className="flex flex-col gap-1 p-3 text-xs">
         {claims.map((name) => (
           <div key={name} className="flex justify-between gap-4">
@@ -248,7 +235,7 @@ function Claims({ payload }: { payload: Record<string, unknown> }) {
           </div>
         ))}
       </dl>
-    </section>
+    </Panel>
   )
 }
 
@@ -308,7 +295,6 @@ function EncodeView() {
             reset()
             setHeader(value)
           }}
-          accent="text-rose-400"
           placeholder="{ ... }"
         />
         <TextEditor
@@ -318,15 +304,13 @@ function EncodeView() {
             reset()
             setPayload(value)
           }}
-          accent="text-violet-400"
           placeholder="{ ... }"
         />
       </div>
 
       <div className="flex min-h-0 flex-col gap-4">
-        <section className="window shrink-0">
-          <div className="title-bar">
-            <span className="text-xs font-semibold">Algorithm</span>
+        <Panel className="shrink-0">
+          <TitleBar title="Algorithm">
             <select
               defaultValue="HS256"
               onChange={(event) => changeAlg(event.target.value as JwtAlgorithm)}
@@ -338,7 +322,7 @@ function EncodeView() {
                 </option>
               ))}
             </select>
-          </div>
+          </TitleBar>
           <div className="p-3">
             <textarea
               value={secret}
@@ -356,13 +340,9 @@ function EncodeView() {
               </Button>
             </div>
           </div>
-        </section>
+        </Panel>
 
-        {error && (
-          <p className="border border-rose-300 bg-rose-500/10 p-3 text-xs text-rose-400">
-            {error}
-          </p>
-        )}
+        {error && <ErrorNote>{error}</ErrorNote>}
 
         {output && <OutputPanel token={output} />}
       </div>
@@ -380,39 +360,26 @@ function OutputPanel({ token }: { token: string }) {
   }
 
   return (
-    <section className="window flex min-h-0 flex-col">
-      <div className="title-bar">
-        <span className="text-xs font-semibold">Encoded token</span>
-        <button
-          type="button"
-          onClick={copy}
-          className="px-2 py-0.5 text-xs"
-        >
+    <Panel className="flex min-h-0 flex-col">
+      <TitleBar title="Encoded token">
+        <Button size="sm" onClick={copy}>
           {copied ? 'Copied' : 'Copy'}
-        </button>
-      </div>
+        </Button>
+      </TitleBar>
       <pre className="flex-1 overflow-auto whitespace-pre-wrap break-all p-3 text-xs text-slate-200">
         {token}
       </pre>
-    </section>
+    </Panel>
   )
 }
 
-function JsonBlock({
-  label,
-  children,
-}: {
-  label: string
-  children: string
-}) {
+function JsonBlock({ label, children }: { label: string; children: string }) {
   return (
-    <section className="window shrink-0">
-      <div className="title-bar">
-        <span className="text-xs font-semibold">{label}</span>
-      </div>
+    <Panel className="shrink-0">
+      <TitleBar title={label} />
       <pre className="overflow-x-auto p-3 text-xs leading-relaxed text-slate-200">
         {children}
       </pre>
-    </section>
+    </Panel>
   )
 }

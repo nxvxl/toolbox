@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import Button from '../components/Button'
+import ErrorNote from '../components/ErrorNote'
+import Panel from '../components/Panel'
 import TextEditor from '../components/TextEditor'
+import TitleBar from '../components/TitleBar'
 import ToolHeader from '../components/ToolHeader'
 import {
   byteLength,
@@ -58,28 +61,25 @@ export default function JsonFormatter() {
         </Button>
       </ToolHeader>
 
-      <section className="window shrink-0">
-        <div className="title-bar">
-          <span className="text-xs font-semibold">Options</span>
-          <div className="ml-auto flex gap-2">
-            <button
-              type="button"
+      <Panel className="shrink-0">
+        <TitleBar title="Options">
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={mode === 'format' ? 'primary' : 'ghost'}
               onClick={() => setMode('format')}
-              data-variant={mode === 'format' ? 'primary' : undefined}
-              className="px-3 py-1 text-xs"
             >
               Format
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              size="sm"
+              variant={mode === 'minify' ? 'primary' : 'ghost'}
               onClick={() => setMode('minify')}
-              data-variant={mode === 'minify' ? 'primary' : undefined}
-              className="px-3 py-1 text-xs"
             >
               Minify
-            </button>
+            </Button>
           </div>
-        </div>
+        </TitleBar>
         <div className="flex flex-wrap items-center gap-5 p-3 text-xs">
           <label className="flex items-center gap-2 text-slate-400">
             Indent
@@ -109,35 +109,29 @@ export default function JsonFormatter() {
             </span>
           )}
         </div>
-      </section>
+      </Panel>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
         <TextEditor
           label="Input"
           value={input}
           onChange={setInput}
-          accent="text-slate-300"
           placeholder="Paste JSON here..."
         />
 
-        <section className="window flex min-h-0 flex-col">
-          <div className="title-bar">
-            <span className="text-xs font-semibold">Output</span>
+        <Panel className="flex min-h-0 flex-col">
+          <TitleBar title="Output">
             {output && (
-              <button
-                type="button"
-                onClick={copy}
-                className="ml-auto px-2 py-0.5 text-xs"
-              >
+              <Button size="sm" onClick={copy}>
                 {copied ? 'Copied' : 'Copy'}
-              </button>
+              </Button>
             )}
-          </div>
+          </TitleBar>
           <div className="min-h-0 flex-1 overflow-auto">
             {parsed.error ? (
-              <pre className="whitespace-pre-wrap p-3 font-mono text-xs text-rose-400">
-                {parsed.error}
-              </pre>
+              <div className="p-3">
+                <ErrorNote>{parsed.error}</ErrorNote>
+              </div>
             ) : output ? (
               <pre className="p-3 text-xs leading-relaxed text-slate-200">
                 {output}
@@ -148,7 +142,7 @@ export default function JsonFormatter() {
               </p>
             )}
           </div>
-        </section>
+        </Panel>
       </div>
     </div>
   )

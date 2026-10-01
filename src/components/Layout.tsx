@@ -7,9 +7,10 @@ export default function Layout() {
     <div className="flex h-full flex-col text-slate-100">
       <header className="menu-bar flex shrink-0 items-center gap-4 px-5 py-2">
         <Link to="/" className="flex items-baseline gap-2">
-          <span className="text-emerald-400">&gt;</span>
-          <span className="text-lg font-bold tracking-tight">toolbox</span>
-          <span className="text-xs text-slate-500">~/utilities</span>
+          <span className="text-lg font-bold tracking-tight text-slate-100">
+            Toolbox
+          </span>
+          <span className="text-xs text-slate-500">developer utilities</span>
         </Link>
         <nav className="ml-auto flex items-center gap-3 text-sm">
           <InstallButton />
