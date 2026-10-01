@@ -53,6 +53,42 @@ menu). After the first load it keeps working without a network connection.
 | `npm run preview` | Preview the production build.        |
 | `npm run lint`    | Run Oxlint.                          |
 
+## Deploy
+
+Toolbox is a static, client-side SPA, so it deploys to any static host with
+HTTPS (required for the service worker / PWA install). The recommended host is
+[Cloudflare Pages](https://pages.cloudflare.com).
+
+### Cloudflare Pages (Git-connected)
+
+1. In the Cloudflare dashboard, go to **Workers & Pages → Create → Pages →
+   Connect to Git** and select the `toolbox` repository.
+2. Set the build settings:
+   - **Framework preset:** Vite
+   - **Build command:** `npm run build`
+   - **Build output directory:** `dist`
+3. Save and deploy. Every push to `master` publishes to production; pull
+   requests get their own preview URL.
+
+No extra configuration is needed beyond the build settings: the client-side
+routing fallback ships in `public/_redirects`, which Vite copies into `dist`.
+
+### Custom domain
+
+In the Pages project, open **Custom domains → Set up a domain**, enter your
+domain, and follow the DNS instructions. HTTPS certificates are issued
+automatically. No `base` change is required in `vite.config.ts` as long as the
+site is served from the domain root.
+
+### Other hosts
+
+- **Netlify:** same settings (`npm run build`, publish `dist`). `public/_redirects`
+  is picked up automatically.
+- **Vercel:** same build settings; add a rewrite of `/(.*)` to `/index.html` in
+  `vercel.json` (Vercel ignores `_redirects`).
+- **GitHub Pages:** works, but requires a `404.html` fallback and a Vite `base`
+  matching the repo subpath. Cloudflare Pages / Netlify / Vercel are simpler.
+
 ## Project structure
 
 ```
