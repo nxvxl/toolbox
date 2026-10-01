@@ -1,5 +1,12 @@
 export type ChangeType = 'added' | 'removed' | 'changed' | 'moved'
 
+export const CHANGE_TYPES: ChangeType[] = [
+  'added',
+  'removed',
+  'changed',
+  'moved',
+]
+
 export interface DiffEntry {
   path: string
   type: ChangeType

@@ -8,7 +8,12 @@ import TextEditor from '../components/TextEditor'
 import TitleBar from '../components/TitleBar'
 import ToolHeader from '../components/ToolHeader'
 import { toneClass } from '../components/tones'
-import { diffJson, type ChangeType, type DiffEntry } from '../lib/jsonDiff'
+import {
+  CHANGE_TYPES,
+  diffJson,
+  type ChangeType,
+  type DiffEntry,
+} from '../lib/jsonDiff'
 
 const SAMPLE_OLD = `{
   "name": "toolbox",
@@ -79,12 +84,9 @@ export default function JsonDiff() {
   }, [compared, error])
 
   const counts = useMemo(() => {
-    const base: Record<ChangeType, number> = {
-      added: 0,
-      removed: 0,
-      changed: 0,
-      moved: 0,
-    }
+    const base = Object.fromEntries(
+      CHANGE_TYPES.map((type) => [type, 0]),
+    ) as Record<ChangeType, number>
     for (const entry of entries) base[entry.type]++
     return base
   }, [entries])
@@ -158,7 +160,9 @@ interface ResultPanelProps {
 }
 
 function ResultPanel({ compared, error, entries, counts }: ResultPanelProps) {
-  const [active, setActive] = useState<Set<ChangeType>>(new Set())
+  const [active, setActive] = useState<Set<ChangeType>>(
+    () => new Set(CHANGE_TYPES),
+  )
 
   const toggle = (type: ChangeType) =>
     setActive((previous) => {
@@ -168,18 +172,18 @@ function ResultPanel({ compared, error, entries, counts }: ResultPanelProps) {
       return next
     })
 
-  const visible = active.size === 0 ? entries : entries.filter((entry) => active.has(entry.type))
+  const visible = entries.filter((entry) => active.has(entry.type))
 
   return (
     <Panel className="flex flex-col">
       <TitleBar title="Result">
         {compared &&
           !error &&
-          (Object.keys(counts) as ChangeType[]).map((type) => (
+          CHANGE_TYPES.map((type) => (
             <Badge
               key={type}
               tone={type}
-              active={active.size === 0 || active.has(type)}
+              active={active.has(type)}
               onClick={() => toggle(type)}
             >
               {TYPE_SIGNS[type]} {counts[type]} {type}
