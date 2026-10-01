@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import Badge from '../components/Badge'
 import Button from '../components/Button'
 import Panel from '../components/Panel'
+import SplitPane from '../components/SplitPane'
 import TextEditor from '../components/TextEditor'
 import TitleBar from '../components/TitleBar'
 import ToolHeader from '../components/ToolHeader'
@@ -94,22 +95,23 @@ export default function TextDiff() {
         </Button>
       </ToolHeader>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
-        <TextEditor
-          label="Original"
-          value={left}
-          onChange={setLeft}
-          placeholder="Paste original text here..."
-        />
-        <TextEditor
-          label="Modified"
-          value={right}
-          onChange={setRight}
-          placeholder="Paste modified text here..."
-        />
-      </div>
+      <SplitPane id="text-diff-main" orientation="vertical">
+        <SplitPane id="text-diff">
+          <TextEditor
+            label="Original"
+            value={left}
+            onChange={setLeft}
+            placeholder="Paste original text here..."
+          />
+          <TextEditor
+            label="Modified"
+            value={right}
+            onChange={setRight}
+            placeholder="Paste modified text here..."
+          />
+        </SplitPane>
 
-      <Panel className="flex max-h-[45%] flex-col">
+        <Panel className="flex flex-col">
         <TitleBar title="Result">
           {result && (
             <>
@@ -164,6 +166,7 @@ export default function TextDiff() {
           )}
         </div>
       </Panel>
+      </SplitPane>
     </div>
   )
 }

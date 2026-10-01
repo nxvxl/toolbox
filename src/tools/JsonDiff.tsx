@@ -3,6 +3,7 @@ import Badge from '../components/Badge'
 import Button from '../components/Button'
 import ErrorNote from '../components/ErrorNote'
 import Panel from '../components/Panel'
+import SplitPane from '../components/SplitPane'
 import TextEditor from '../components/TextEditor'
 import TitleBar from '../components/TitleBar'
 import ToolHeader from '../components/ToolHeader'
@@ -122,27 +123,29 @@ export default function JsonDiff() {
         </Button>
       </ToolHeader>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
-        <TextEditor
-          label="Original"
-          value={left}
-          onChange={setLeft}
-          placeholder="Paste JSON here..."
-        />
-        <TextEditor
-          label="Modified"
-          value={right}
-          onChange={setRight}
-          placeholder="Paste JSON here..."
-        />
-      </div>
+      <SplitPane id="json-diff-main" orientation="vertical">
+        <SplitPane id="json-diff">
+          <TextEditor
+            label="Original"
+            value={left}
+            onChange={setLeft}
+            placeholder="Paste JSON here..."
+          />
+          <TextEditor
+            label="Modified"
+            value={right}
+            onChange={setRight}
+            placeholder="Paste JSON here..."
+          />
+        </SplitPane>
 
-      <ResultPanel
-        error={error}
-        compared={!!compared}
-        entries={entries}
-        counts={counts}
-      />
+        <ResultPanel
+          error={error}
+          compared={!!compared}
+          entries={entries}
+          counts={counts}
+        />
+      </SplitPane>
     </div>
   )
 }
@@ -155,18 +158,33 @@ interface ResultPanelProps {
 }
 
 function ResultPanel({ compared, error, entries, counts }: ResultPanelProps) {
+  const [active, setActive] = useState<Set<ChangeType>>(new Set())
+
+  const toggle = (type: ChangeType) =>
+    setActive((previous) => {
+      const next = new Set(previous)
+      if (next.has(type)) next.delete(type)
+      else next.add(type)
+      return next
+    })
+
+  const visible = active.size === 0 ? entries : entries.filter((entry) => active.has(entry.type))
+
   return (
-    <Panel className="flex max-h-[45%] flex-col">
+    <Panel className="flex flex-col">
       <TitleBar title="Result">
-        {compared && !error && (
-          <div className="flex gap-2">
-            {(Object.keys(counts) as ChangeType[]).map((type) => (
-              <Badge key={type} tone={type}>
-                {TYPE_SIGNS[type]} {counts[type]} {type}
-              </Badge>
-            ))}
-          </div>
-        )}
+        {compared &&
+          !error &&
+          (Object.keys(counts) as ChangeType[]).map((type) => (
+            <Badge
+              key={type}
+              tone={type}
+              active={active.size === 0 || active.has(type)}
+              onClick={() => toggle(type)}
+            >
+              {TYPE_SIGNS[type]} {counts[type]} {type}
+            </Badge>
+          ))}
       </TitleBar>
 
       <div className="min-h-24 flex-1 overflow-auto p-3">
@@ -181,9 +199,14 @@ function ResultPanel({ compared, error, entries, counts }: ResultPanelProps) {
             No differences found. The documents are identical.
           </p>
         )}
-        {compared && !error && entries.length > 0 && (
+        {compared && !error && entries.length > 0 && visible.length === 0 && (
+          <p className="text-sm text-slate-500">
+            No changes match the selected filters.
+          </p>
+        )}
+        {compared && !error && visible.length > 0 && (
           <ul className="flex flex-col gap-2">
-            {entries.map((entry, index) => (
+            {visible.map((entry, index) => (
               <ChangeRow key={`${entry.path}-${index}`} entry={entry} />
             ))}
           </ul>

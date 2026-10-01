@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Button from '../components/Button'
+import PageTransition from '../components/PageTransition'
+import SearchInput from '../components/SearchInput'
 import TitleBar from '../components/TitleBar'
 import { filterTools } from '../tools/registry'
 
@@ -10,7 +11,7 @@ export default function Home() {
   const results = useMemo(() => filterTools(query), [query])
 
   return (
-    <div className="h-full overflow-auto">
+    <PageTransition className="h-full overflow-auto">
       <div className="mx-auto flex max-w-4xl flex-col gap-8 px-6 py-12">
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight text-slate-100">
@@ -21,25 +22,14 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="relative">
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search tools..."
-            autoFocus
-            className="w-full py-3 pl-4 pr-12 text-sm text-slate-100 outline-none"
-          />
-          <Button
-            size="sm"
-            className="absolute right-2 top-1/2 -translate-y-1/2"
-            onClick={() => setQuery('')}
-            aria-label="Clear search"
-            disabled={query === ''}
-          >
-            ×
-          </Button>
-        </div>
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Search tools..."
+          ariaLabel="Search tools"
+          autoFocus
+          className="py-3 pl-4 pr-12 text-sm text-slate-100"
+        />
 
         {results.length === 0 ? (
           <p className="text-sm text-slate-500">
@@ -51,7 +41,7 @@ export default function Home() {
               <li key={tool.id}>
                 <Link
                   to={`/tools/${tool.id}`}
-                  className="window flex h-full flex-col transition hover:-translate-y-0.5"
+                  className="window card flex h-full flex-col"
                 >
                   <TitleBar title={tool.name} />
                   <div className="flex flex-1 flex-col gap-2 p-4">
@@ -75,6 +65,6 @@ export default function Home() {
           </ul>
         )}
       </div>
-    </div>
+    </PageTransition>
   )
 }

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { filterTools } from '../tools/registry'
+import SearchInput from './SearchInput'
 
 const initials = (name: string): string =>
   name
@@ -44,13 +45,12 @@ export default function ToolSidebar() {
 
       {!collapsed && (
         <div className="border-b border-slate-800 p-2">
-          <input
-            type="search"
+          <SearchInput
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={setQuery}
             placeholder="Search tools..."
-            aria-label="Search tools"
-            className="w-full px-2 py-1 text-xs outline-none"
+            ariaLabel="Search tools"
+            className="px-2 py-1 pr-8 text-xs"
           />
         </div>
       )}

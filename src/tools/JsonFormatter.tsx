@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import Button from '../components/Button'
 import ErrorNote from '../components/ErrorNote'
 import Panel from '../components/Panel'
+import SplitPane from '../components/SplitPane'
 import TextEditor from '../components/TextEditor'
 import TitleBar from '../components/TitleBar'
 import ToolHeader from '../components/ToolHeader'
@@ -111,14 +112,13 @@ export default function JsonFormatter() {
         </div>
       </Panel>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
+      <SplitPane id="json-formatter">
         <TextEditor
           label="Input"
           value={input}
           onChange={setInput}
           placeholder="Paste JSON here..."
         />
-
         <Panel className="flex min-h-0 flex-col">
           <TitleBar title="Output">
             {output && (
@@ -143,7 +143,7 @@ export default function JsonFormatter() {
             )}
           </div>
         </Panel>
-      </div>
+      </SplitPane>
     </div>
   )
 }

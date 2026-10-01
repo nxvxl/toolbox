@@ -3,6 +3,7 @@ import Badge from '../components/Badge'
 import Button from '../components/Button'
 import ErrorNote from '../components/ErrorNote'
 import Panel from '../components/Panel'
+import SplitPane from '../components/SplitPane'
 import TextEditor from '../components/TextEditor'
 import TitleBar from '../components/TitleBar'
 import ToolHeader from '../components/ToolHeader'
@@ -109,7 +110,7 @@ function DecodeView({ onLoadEncode }: { onLoadEncode: () => void }) {
   }
 
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
+    <SplitPane id="jwt-decode">
       <div className="flex min-h-0 flex-col gap-4">
         <TextEditor
           label="Encoded token"
@@ -200,7 +201,7 @@ function DecodeView({ onLoadEncode }: { onLoadEncode: () => void }) {
           </p>
         )}
       </div>
-    </div>
+    </SplitPane>
   )
 }
 
@@ -286,7 +287,7 @@ function EncodeView() {
   }
 
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
+    <SplitPane id="jwt-encode">
       <div className="flex min-h-0 flex-col gap-4">
         <TextEditor
           label="Header"
@@ -346,7 +347,7 @@ function EncodeView() {
 
         {output && <OutputPanel token={output} />}
       </div>
-    </div>
+    </SplitPane>
   )
 }
 

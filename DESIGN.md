@@ -192,11 +192,51 @@ diff counts and the JWT valid/expired state.
 The single error presentation: boxed, rose-tinted, monospace, pre-wrapped
 (`text-rose-700`). Use it for all parse/verification errors.
 
+### SearchInput — `SearchInput.tsx`
+
+An inset search field with a clear `×` that appears only when there is text.
+Used by both the Home page and the sidebar (pass sizing via `className`).
+
 ### TextEditor — `TextEditor.tsx`
 
 `Panel` + `TitleBar` + a flush `<textarea>` (white document area, no radius,
 blue inset focus ring via `.window > textarea`). Used for all text/JSON/token
 inputs.
+
+### SplitPane — `SplitPane.tsx`
+
+Two panes with a draggable divider, resizable along one axis, used by every
+multi-pane tool view:
+
+```tsx
+// Side by side (editors)
+<SplitPane id="json-diff">
+  <TextEditor … />
+  <TextEditor … />
+</SplitPane>
+
+// Stacked (editors over the result)
+<SplitPane id="json-diff-main" orientation="vertical">
+  <SplitPane id="json-diff">…</SplitPane>
+  <ResultPanel … />
+</SplitPane>
+```
+
+- `orientation`: `horizontal` (default) = side by side, divider dragged left/
+  right; `vertical` = stacked, divider dragged up/down (used for the JSON Diff
+  and Text Diff editor-over-result layout).
+- `defaultRatio` (default 50): the first pane's share, used on first load and
+  restored on double-click of the divider.
+- Drag the divider (or focus it and use the Arrow keys) to change the split;
+  clamped to 20–80%.
+- The divider is a beveled groove with an always-visible grip "nub" that turns
+  blue while dragging, and a small tooltip shows the current percentage during
+  the drag.
+- The ratio is persisted under `toolbox.split.<id>` in `localStorage`, so it is
+  restored on refresh. Use a stable, per-instance `id`.
+- Below `1024px` a horizontal split stacks into one column and the divider is
+  hidden; a vertical split stays stacked (`.split` / `.split-vertical` in
+  `src/index.css`).
 
 ### ToolHeader — `ToolHeader.tsx`
 
@@ -268,7 +308,9 @@ gray gradient thumb (`background-clip: content-box`).
 | `src/components/Button.tsx` | buttons (`variant`, `size`) |
 | `src/components/Badge.tsx` / `tones.ts` | status chips + tone classes |
 | `src/components/ErrorNote.tsx` | error presentation |
+| `src/components/SearchInput.tsx` | search field with clear button |
 | `src/components/TextEditor.tsx` | editor field |
+| `src/components/SplitPane.tsx` | resizable split panes (horizontal/vertical) |
 | `src/components/ToolHeader.tsx` | tool hero |
 | `src/components/ToolSidebar.tsx` | sidebar nav + search |
 | `src/components/Layout.tsx` | top menu bar + outlet |
